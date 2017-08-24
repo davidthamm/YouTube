@@ -1,0 +1,109 @@
+<html><head><meta charset=utf-8><title>YouTube</title><style>
+body{margin:0;background-color:#1b1b1b;-ms-overflow-style:none}
+iframe{border:0;width:100%;height:100%;opacity:0;transition-duration:1s;transition-property:opacity}
+pre{white-space:pre-line;font-family:monospace;color:#999;font-size:15px}
+a{color:#999;text-decoration:none}
+input{color:#999;background-color:#1b1b1b;text-align:center;width:100%;height:25px;font-size:20px;
+	border:none;opacity:0;transition-property:opacity;transition-duration:1s}
+#search{width:100%;outline:#999 solid 1px;margin-bottom:4px}
+#search:hover input{opacity:1}input:focus{opacity:1;outline:0}
+::-webkit-scrollbar{display:none}
+</style></head>
+<body><div id='player'></div><div id='below'></div>
+<script src='//youtube.com/iframe_api'></script>
+<script>
+try{
+	id=window.location.search.split('v=')[1].split('&')[0].split('#')[0];
+}
+catch(err){
+	document.body.innerHTML = '<pre>Hi, add ?v= and a valid video id to url.<pre>';
+}
+url = window.location.search.split('&spfreload=10')[0];
+history.replaceState(null, document.title, "//iflyun.net/y/"+url);
+alist=url.match(/list=/)?url.split('list=')[1].split('&')[0]:0;
+
+var player;
+
+function onYouTubeIframeAPIReady() {
+    update();
+    player = new YT.Player('player', {
+        videoId: id,
+        playerVars: {
+            autoplay: 1,
+            autohide: 1,
+            showinfo: 0,
+            list: alist
+        },
+        events: {
+            onReady: function(event) {
+		document.getElementsByTagName('iframe')[0].style.opacity = 1;
+                player.addEventListener('onStateChange',
+                    'onchange');
+            }
+        }
+    });
+}
+
+function onchange(event) {
+    if (event.data == 0 && lid) alist ? player.previousVideo() : player.seekTo();
+    if (event.data == -1 && !lid) {
+        id = player.getVideoUrl().split('v=')[1].split('&')[0];
+        update();
+	setTimeout(function(){
+		url=player.getVideoUrl().split('?')[1];
+		history.pushState(null, document.title, "//iflyun.net/y/?"+url);
+	}, 1000);
+    }
+}
+function update() {
+    document.getElementById('below').innerHTML = '';
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            json = xmlhttp.responseText;
+            o = JSON.parse(json).items[0];
+			os=o.snippet,ox=o.statistics;
+            document.title = os.title;
+            r = ox.likeCount ? ' <a id="loop" href="javascript:loop()">Rating: <u>' + (ox.likeCount/ox.dislikeCount).toFixed(2) + '</u></a>' : '';
+			m = '<a href="http://www.video2mp3.net/loading.php?url=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D' + id + '" >ViewCount</a>';
+            document.getElementById('below').innerHTML =
+                '<center><pre>' + os.title +
+                '<br />Uploader: <a href="//youtube.com/channel/' + os.channelId +
+                '"><u>' + os.channelTitle + '</u></a> Date: <u>' + os.publishedAt
+                .split('T')[0] + '</u> ' + m + ': <u>' + ox.viewCount +
+                '</u>' + r + '<br /><br />' + os.description +
+                '</pre><div id="search"><form action="//youtube.com/results" method="get"><input name="search_query" placeholder="Search YouTube"></form><div></center>';
+            xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    json = xmlhttp.responseText;
+                    obj = JSON.parse(json);
+                    for (var a = 0; a < obj.items.length; a++) {
+                        e = obj.items[a].snippet.topLevelComment.snippet;
+                        if (e.textDisplay) document.getElementById('below').innerHTML += '<pre><u>' +
+                            e.authorDisplayName + '</u><br />' + e.textDisplay + '<br /></pre>';
+                    }
+                }
+            };
+            xmlhttp.open('GET', 'https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&maxResults=50&fields=items%2Fsnippet%2FtopLevelComment%2Fsnippet&videoId=' + id +
+		'&key=AIzaSyBoiirKvEerE6QSutb_lEn-kQ-Dwy_1qKg', true);
+            xmlhttp.send();
+        }
+    };
+    xmlhttp.open('GET', 'https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatistics%2CcontentDetails&id=' + id +
+        '&key=AIzaSyBoiirKvEerE6QSutb_lEn-kQ-Dwy_1qKg', true);
+    xmlhttp.send();
+}
+var lid;
+function loop(){
+lo=document.getElementById('loop');
+if (lid){
+	lid=0;
+	lo.innerHTML=lbackup;
+} else {
+	lid=1;
+	lbackup=lo.innerHTML;
+	lo.innerHTML="Loop: <u>∞</u>";
+}
+}
+</script></body></html>
