@@ -19,7 +19,7 @@ catch(err){
 	document.body.innerHTML = '<pre>Hi, add ?v= and a valid video id to url.<pre>';
 }
 url = window.location.search.split('&spfreload=10')[0];
-history.replaceState(null, document.title, "//iflyun.net/y/"+url);
+history.replaceState(null, document.title, "//yukip.github.io/y/"+url);
 alist=url.match(/list=/)?url.split('list=')[1].split('&')[0]:0;
 
 var player;
@@ -51,7 +51,7 @@ function onchange(event) {
         update();
 	setTimeout(function(){
 		url=player.getVideoUrl().split('?')[1];
-		history.pushState(null, document.title, "//iflyun.net/y/?"+url);
+		history.pushState(null, document.title, "//yukip.github.io/y/?"+url); 
 	}, 1000);
     }
 }
